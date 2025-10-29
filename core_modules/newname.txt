@@ -1,0 +1,2 @@
+Text from fs.js!
+Appended text from fs.js!
