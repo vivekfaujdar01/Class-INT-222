@@ -1,0 +1,27 @@
+[
+    {
+        "name": "Vivek",
+        "marks": 100,
+        "subject": "Mathematics"
+    },
+    {
+        "name": "Asha",
+        "marks": 93,
+        "subject": "Science"
+    },
+    {
+        "name": "Rahul",
+        "marks": 81,
+        "subject": "English"
+    },
+    {
+        "name": "Priya",
+        "marks": 69,
+        "subject": "History"
+    },
+    {
+        "name": "Ankit",
+        "marks": 56,
+        "subject": "Geography"
+    }
+]
