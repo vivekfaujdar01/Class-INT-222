@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h2>Simple Chat</h2>
+
+  <div id="chat"></div>
+  <input id="msg" placeholder="Type..." />
+  <button onclick="send()">Send</button>
+
+  <script>
+    // 1) Connect to WebSocket server
+    const socket = new WebSocket("ws://localhost:3000");
+
+    const chat = document.getElementById("chat");
+    const msg = document.getElementById("msg");
+
+    // 2) When we get a message → show on screen
+    socket.onmessage = (event) => {
+      chat.innerHTML += "<div>" + event.data + "</div>";
+    };
+
+    // 3) Send message to server
+    function send() {
+      socket.send(msg.value);
+      msg.value = "";
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>clock</h1>
+    <h1 id="clock"></h1>
+
+    <script>
+      const ws = new WebSocket("ws://" + location.host);
+
+      let server, client;
+
+      ws.onmessage = (e) => {
+        server = JSON.parse(e.data).time;
+        client = performance.now();
+      };
+
+      function tick() {
+        if (server) {
+          const now = new Date(server + (performance.now() - client));
+          document.getElementById("clock").innerText =
+            now.toLocaleTimeString();
+        }
+        requestAnimationFrame(tick);
+      }
+      tick();
+    </script>
+  </body>
+</html>

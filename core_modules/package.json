@@ -10,6 +10,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "events": "^3.3.0"
+    "events": "^3.3.0",
+    "express": "^5.1.0",
+    "ws": "^8.18.3"
   }
 }
