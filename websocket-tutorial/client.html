@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Client Tutorial</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #00d4ff;
+            text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+        }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #ff4444;
+            transition: background 0.3s;
+        }
+
+        .status-indicator.connected {
+            background: #00ff88;
+            box-shadow: 0 0 10px #00ff88;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card h2 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-connect {
+            background: linear-gradient(135deg, #00d4ff, #0099ff);
+            color: #000;
+        }
+
+        .btn-disconnect {
+            background: linear-gradient(135deg, #ff4444, #ff0066);
+            color: #fff;
+        }
+
+        .btn-send {
+            background: linear-gradient(135deg, #00ff88, #00cc66);
+            color: #000;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #00d4ff;
+        }
+
+        #messages {
+            height: 300px;
+            overflow-y: auto;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.9rem;
+        }
+
+        .message {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .message.sent {
+            background: rgba(0, 255, 136, 0.2);
+            border-left: 3px solid #00ff88;
+        }
+
+        .message.received {
+            background: rgba(0, 212, 255, 0.2);
+            border-left: 3px solid #00d4ff;
+        }
+
+        .message.system {
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 3px solid #888;
+            font-style: italic;
+        }
+
+        .message.error {
+            background: rgba(255, 68, 68, 0.2);
+            border-left: 3px solid #ff4444;
+        }
+
+        .timestamp {
+            font-size: 0.75rem;
+            color: #888;
+            margin-right: 10px;
+        }
+
+        .code-example {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .code-example .comment {
+            color: #6a9955;
+        }
+
+        .code-example .keyword {
+            color: #569cd6;
+        }
+
+        .code-example .string {
+            color: #ce9178;
+        }
+
+        .code-example .method {
+            color: #dcdcaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 WebSocket Client</h1>
+
+        <!-- Connection Status -->
+        <div class="status-bar">
+            <div class="status-indicator" id="statusIndicator"></div>
+            <span id="statusText">Disconnected</span>
+        </div>
+
+        <!-- Connection Controls -->
+        <div class="card">
+            <h2>📡 Connection</h2>
+            <div class="button-group">
+                <button class="btn-connect" id="connectBtn" onclick="connect()">
+                    Connect
+                </button>
+                <button class="btn-disconnect" id="disconnectBtn" onclick="disconnect()" disabled>
+                    Disconnect
+                </button>
+            </div>
+        </div>
+
+        <!-- Send Message -->
+        <div class="card">
+            <h2>📤 Send Message</h2>
+            <div class="input-group">
+                <input type="text" id="messageInput" placeholder="Type your message..." onkeypress="handleKeyPress(event)">
+                <button class="btn-send" id="sendBtn" onclick="sendMessage()" disabled>
+                    Send
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages Log -->
+        <div class="card">
+            <h2>📋 Messages</h2>
+            <div id="messages"></div>
+        </div>
+
+        <!-- Code Examples -->
+        <div class="card">
+            <h2>💻 JavaScript WebSocket API</h2>
+            <div class="code-example">
+                <span class="comment">// 1. Create WebSocket connection</span><br>
+                <span class="keyword">const</span> ws = <span class="keyword">new</span> <span class="method">WebSocket</span>(<span class="string">'ws://localhost:8080'</span>);<br><br>
+                
+                <span class="comment">// 2. Connection opened</span><br>
+                ws.<span class="method">onopen</span> = () => { console.<span class="method">log</span>(<span class="string">'Connected!'</span>); };<br><br>
+                
+                <span class="comment">// 3. Listen for messages</span><br>
+                ws.<span class="method">onmessage</span> = (event) => { console.<span class="method">log</span>(event.data); };<br><br>
+                
+                <span class="comment">// 4. Send a message</span><br>
+                ws.<span class="method">send</span>(<span class="string">'Hello Server!'</span>);<br><br>
+                
+                <span class="comment">// 5. Close connection</span><br>
+                ws.<span class="method">close</span>();
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * ============================================
+         * WEBSOCKET CLIENT IMPLEMENTATION
+         * ============================================
+         * This demonstrates the browser WebSocket API
+         */
+
+        // Global WebSocket variable
+        let socket = null;
+
+        // DOM Elements
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const sendBtn = document.getElementById('sendBtn');
+        const messageInput = document.getElementById('messageInput');
+        const messagesDiv = document.getElementById('messages');
+
+        /**
+         * Connect to WebSocket Server
+         * Creates a new WebSocket connection
+         */
+        function connect() {
+            // Create new WebSocket connection
+            // The URL format is: ws://hostname:port for non-secure
+            // or wss://hostname:port for secure (TLS)
+            socket = new WebSocket('ws://localhost:8080');
+
+            /**
+             * EVENT: onopen
+             * Fires when the connection is successfully established
+             */
+            socket.onopen = function(event) {
+                updateStatus(true);
+                logMessage('Connected to server!', 'system');
+                console.log('WebSocket connection established', event);
+            };
+
+            /**
+             * EVENT: onmessage
+             * Fires when a message is received from the server
+             * @param {MessageEvent} event - Contains the message data
+             */
+            socket.onmessage = function(event) {
+                console.log('Message received:', event.data);
+                
+                // Try to parse JSON message
+                try {
+                    const data = JSON.parse(event.data);
+                    logMessage(JSON.stringify(data, null, 2), 'received');
+                } catch (e) {
+                    // Not JSON, display as plain text
+                    logMessage(event.data, 'received');
+                }
+            };
+
+            /**
+             * EVENT: onclose
+             * Fires when the connection is closed
+             * @param {CloseEvent} event - Contains close code and reason
+             */
+            socket.onclose = function(event) {
+                updateStatus(false);
+                
+                // Close codes:
+                // 1000 - Normal closure
+                // 1001 - Going away (page closing)
+                // 1006 - Abnormal closure (no close frame)
+                const reason = event.reason || 'No reason provided';
+                logMessage(`Disconnected (Code: ${event.code}, Reason: ${reason})`, 'system');
+                console.log('WebSocket closed:', event);
+            };
+
+            /**
+             * EVENT: onerror
+             * Fires when an error occurs
+             * Note: Always followed by onclose event
+             */
+            socket.onerror = function(error) {
+                logMessage('Connection error occurred!', 'error');
+                console.error('WebSocket error:', error);
+            };
+        }
+
+        /**
+         * Disconnect from WebSocket Server
+         * Gracefully closes the connection
+         */
+        function disconnect() {
+            if (socket) {
+                // Close with code 1000 (normal closure)
+                // Optionally pass a reason string
+                socket.close(1000, 'User requested disconnect');
+                socket = null;
+            }
+        }
+
+        /**
+         * Send a message to the server
+         */
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            
+            if (!message) {
+                logMessage('Please enter a message!', 'error');
+                return;
+            }
+
+            // Check if socket is connected
+            // readyState values:
+            // 0 - CONNECTING
+            // 1 - OPEN
+            // 2 - CLOSING
+            // 3 - CLOSED
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                // Create a JSON message (optional - you can send plain text)
+                const data = JSON.stringify({
+                    text: message,
+                    timestamp: new Date().toISOString()
+                });
+
+                // Send the message
+                socket.send(data);
+                
+                logMessage(`You: ${message}`, 'sent');
+                messageInput.value = '';
+            } else {
+                logMessage('Not connected to server!', 'error');
+            }
+        }
+
+        /**
+         * Handle Enter key press in input field
+         */
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        /**
+         * Update UI based on connection status
+         */
+        function updateStatus(connected) {
+            if (connected) {
+                statusIndicator.classList.add('connected');
+                statusText.textContent = 'Connected';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                sendBtn.disabled = false;
+            } else {
+                statusIndicator.classList.remove('connected');
+                statusText.textContent = 'Disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                sendBtn.disabled = true;
+            }
+        }
+
+        /**
+         * Log a message to the messages div
+         */
+        function logMessage(message, type) {
+            const timestamp = new Date().toLocaleTimeString();
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.innerHTML = `<span class="timestamp">[${timestamp}]</span>${escapeHtml(message)}`;
+            messagesDiv.appendChild(messageDiv);
+            
+            // Auto-scroll to bottom
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        /**
+         * Escape HTML to prevent XSS
+         */
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initial log message
+        logMessage('Click "Connect" to start', 'system');
+    </script>
+</body>
+</html>

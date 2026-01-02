@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Simple WebSocket Client</title>
+    <style>
+        body {
+            font-family: Arial;
+            padding: 20px;
+            background: #1a1a2e;
+            color: white;
+        }
+
+        #messages {
+            background: #222;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+
+        input,
+        button {
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            background: #00d4ff;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔌 Simple WebSocket</h1>
+
+    <button onclick="connect()">Connect</button>
+    <button onclick="disconnect()">Disconnect</button>
+
+    <div id="messages"></div>
+
+    <input type="text" id="msgInput" placeholder="Type message...">
+    <button onclick="sendMsg()">Send</button>
+
+    <script>
+        let socket;
+
+        // Step 1: Connect to server
+        function connect() {
+            socket = new WebSocket('ws://localhost:8080');
+
+            // When connected
+            socket.onopen = () => {
+                log('✅ Connected!');
+            };
+
+            // When message received
+            socket.onmessage = (event) => {
+                log('📩 ' + event.data);
+            };
+
+            // When disconnected
+            socket.onclose = () => {
+                log('❌ Disconnected');
+            };
+        }
+
+        // Step 2: Send message
+        function sendMsg() {
+            const msg = document.getElementById('msgInput').value;
+            socket.send(msg);
+            log('📤 You: ' + msg);
+            document.getElementById('msgInput').value = '';
+        }
+
+        // Step 3: Disconnect
+        function disconnect() {
+            socket.close();
+        }
+
+        // Helper to show messages
+        function log(text) {
+            document.getElementById('messages').innerHTML += text + '<br>';
+        }
+    </script>
+</body>
+
+</html>

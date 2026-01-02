@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Socket.IO Client</title>
+    <style>
+        body {
+            font-family: Arial;
+            padding: 20px;
+            background: #1a1a2e;
+            color: white;
+        }
+
+        #messages {
+            background: #222;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+
+        input,
+        button {
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        button {
+            background: #00d4ff;
+            border: none;
+            cursor: pointer;
+            margin: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🔌 Socket.IO Client</h1>
+    <p id="status">Connecting...</p>
+
+    <div id="messages"></div>
+
+    <input type="text" id="msgInput" placeholder="Type message...">
+    <button onclick="sendMsg()">Send</button>
+
+    <!-- Socket.IO client library (loaded from server) -->
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script>
+        // Connect to server (automatic!)
+        const socket = io();
+
+        // When connected
+        socket.on('connect', () => {
+            document.getElementById('status').innerText = '✅ Connected! ID: ' + socket.id;
+            log('Connected to server');
+        });
+
+        // Listen for 'welcome' event
+        socket.on('welcome', (message) => {
+            log('📩 ' + message);
+        });
+
+        // Listen for 'chat' event
+        socket.on('chat', (message) => {
+            log('💬 ' + message);
+        });
+
+        // When disconnected
+        socket.on('disconnect', () => {
+            document.getElementById('status').innerText = '❌ Disconnected';
+            log('Disconnected');
+        });
+
+        // Send message
+        function sendMsg() {
+            const msg = document.getElementById('msgInput').value;
+            socket.emit('chat', msg);  // emit = send event
+            document.getElementById('msgInput').value = '';
+        }
+
+        // Helper
+        function log(text) {
+            document.getElementById('messages').innerHTML += text + '<br>';
+        }
+
+        // Send on Enter key
+        document.getElementById('msgInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMsg();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "websocket-tutorial",
+  "version": "1.0.0",
+  "description": "Learn WebSockets step by step",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "chat": "node advanced-server.js"
+  },
+  "keywords": [
+    "websocket",
+    "tutorial",
+    "nodejs"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3",
+    "ws": "^8.14.2"
+  }
+}
